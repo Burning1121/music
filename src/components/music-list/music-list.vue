@@ -17,7 +17,7 @@
     <scroll @scroll="scroll" :listen-scroll="listenScroll" :probe-type="probeType" class="list" :data="songs"
             ref="list">
       <div class="song-list-wrapper">
-        <song-list :songs="songs"></song-list>
+        <song-list @select="selectItem" :songs="songs"></song-list>
       </div>
       <div class="loading-container" v-show="!songs.length">
         <loading></loading>
@@ -30,7 +30,8 @@
   import Scroll from 'src/base/scroll/scroll'
   import SongList from 'src/base/song-list/song-list'
   import Loading from 'src/base/loading/loading'
-  import {prefixStyle} from 'src/common/js/dom'
+  import { prefixStyle } from 'src/common/js/dom'
+  import { mapActions } from 'vuex'
 
   const transform = prefixStyle('transform')
   const backdrop = prefixStyle('backdrop-filter')
@@ -71,7 +72,16 @@
       },
       back() {
         this.$router.back()
-      }
+      },
+      selectItem(item, index) {
+        this.selectPlay({
+          list: this.songs,
+          index
+        })
+      },
+      ...mapActions([
+        'selectPlay'
+      ])
     },
     computed: {
       bgStyle() {
@@ -115,7 +125,7 @@
   }
 </script>
 
-<style scoped lang="stylus" rel="stylesheet/stylus">
+<style scoped lang="stylus" type="text/stylus" rel="stylesheet/stylus">
   @import "~common/stylus/variable"
   @import "~common/stylus/mixin"
 
