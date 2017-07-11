@@ -1,5 +1,5 @@
 <template>
-  <div class="player" v-show="playList.length>0">
+  <div class="player" v-if="playList.length>0">
     <transition name="normal"
                 @enter="enter"
                 @after-enter="afterEnter"
@@ -20,7 +20,7 @@
         <div class="middle">
           <div class="middle-l">
             <div class="cd-wrapper" ref="cdWrapper">
-              <div class="cd">
+              <div class="cd" :class="{'play':playing, 'play pause':!playing}">
                 <img :src="currentSong.image" class="image">
               </div>
             </div>
@@ -31,14 +31,14 @@
             <div class="icon i-left">
               <i class="icon-sequence"></i>
             </div>
-            <div class="icon i-left">
-              <i class="icon-prev"></i>
+            <div class="icon i-left" :class="{'disable':!songReady}">
+              <i class="icon-prev" @click="prev"></i>
             </div>
-            <div class="icon i-center">
-              <i class="icon-play" @click="togglePlay"></i>
+            <div class="icon i-center" :class="{'disable':!songReady}">
+              <i :class="{'icon-play':!playing, 'icon-pause':playing}" @click="togglePlay"></i>
             </div>
-            <div class="icon i-right">
-              <i class="icon-next"></i>
+            <div class="icon i-right" :class="{'disable':!songReady}">
+              <i class="icon-next" @click="next"></i>
             </div>
             <div class="icon i-right">
               <i class="icon icon-not-favorite"></i>
@@ -50,33 +50,41 @@
     <transition name="mini">
       <div @click="open" class="mini-player" v-show="!fullScreen">
         <div class="icon">
-          <img :src="currentSong.image" width="40" height="40">
+          <img :class="{'play':playing, 'play pause':!playing}" :src="currentSong.image" width="40" height="40">
         </div>
         <div class="text">
           <h2 class="name" v-html="currentSong.name"></h2>
           <p class="desc" v-html="currentSong.singer"></p>
         </div>
-        <div class="control"></div>
+        <div class="control">
+          <i :class="{'icon-play-mini':!playing, 'icon-pause-mini':playing}" @click.stop="togglePlay"></i>
+        </div>
         <div class="control">
           <i class="icon-playlist"></i>
         </div>
       </div>
     </transition>
-    <audio ref="audio" :src="currentSong.url"></audio>
+    <audio ref="audio" :src="currentSong.url" @canplay="ready" @error="error"></audio>
   </div>
 </template>
 
 <script type="text/ecmascript-6">
-  import { mapGetters, mapMutations } from 'vuex'
+  import {mapGetters, mapMutations} from 'vuex'
   import animations from 'create-keyframe-animation'
 
   export default {
+    data() {
+      return {
+        songReady: false
+      }
+    },
     computed: {
       ...mapGetters([
         'playList',
         'fullScreen',
         'currentSong',
-        'playing'
+        'playing',
+        'currentIndex'
       ])
     },
     methods: {
@@ -144,7 +152,44 @@
         this.$refs.cdWrapper.style.animation = ''
       },
       togglePlay() {
+        if (!this.songReady) {
+          return
+        }
         this.setPlayingState(!this.playing)
+      },
+      prev() {
+        if (!this.songReady) {
+          return
+        }
+        let index = this.currentIndex - 1
+        if (index === -1) {
+          index = this.playList.length - 1
+        }
+        this.setCurrentIndex(index)
+        if (!this.playing) {
+          this.togglePlay()
+        }
+        this.songReady = false
+      },
+      next() {
+        if (!this.songReady) {
+          return
+        }
+        let index = this.currentIndex + 1
+        if (index === this.playList.length) {
+          index = 0
+        }
+        this.setCurrentIndex(index)
+        if (!this.playing) {
+          this.togglePlay()
+        }
+        this.songReady = false
+      },
+      ready() {
+        this.songReady = true
+      },
+      error() {
+        this.songReady = true
       },
       _getPosAndScale() {
         const miniWidth = 40
@@ -160,7 +205,8 @@
       },
       ...mapMutations({
         setFullScreen: 'SET_FULL_SCREEN',
-        setPlayingState: 'SET_PLAYING_STATE'
+        setPlayingState: 'SET_PLAYING_STATE',
+        setCurrentIndex: 'SET_CURRENT_INDEX'
       })
     },
     watch: {
