@@ -27,6 +27,13 @@
           </div>
         </div>
         <div class="bottom">
+          <div class="progress-wrapper">
+            <div class="time time-l">{{formate(currentTime)}}</div>
+            <div class="progress-bar-wrapper">
+              <progress-bar @percentChange="onProgressBarChange" :percent="percent"></progress-bar>
+            </div>
+            <div class="time time-r">{{formate(currentSong.duration)}}</div>
+          </div>
           <div class="operators">
             <div class="icon i-left">
               <i class="icon-sequence"></i>
@@ -64,21 +71,27 @@
         </div>
       </div>
     </transition>
-    <audio ref="audio" :src="currentSong.url" @canplay="ready" @error="error"></audio>
+    <audio ref="audio" :src="currentSong.url" @timeupdate="updateTime" @canplay="ready"
+           @error="error"></audio>
   </div>
 </template>
 
 <script type="text/ecmascript-6">
   import {mapGetters, mapMutations} from 'vuex'
   import animations from 'create-keyframe-animation'
+  import ProgressBar from 'src/base/progress-bar/progress-bar'
 
   export default {
     data() {
       return {
-        songReady: false
+        songReady: false,
+        currentTime: 0
       }
     },
     computed: {
+      percent() {
+        return this.currentTime / this.currentSong.duration
+      },
       ...mapGetters([
         'playList',
         'fullScreen',
@@ -191,6 +204,22 @@
       error() {
         this.songReady = true
       },
+      updateTime(e) {
+        this.currentTime = e.target.currentTime
+      },
+      formate(time) {
+        let minute = time / 60 | 0
+        let second = '00' + (time % 60 | 0)
+        second = second.substr(-2)
+
+        return `${minute}:${second}`
+      },
+      onProgressBarChange(percent) {
+        this.$refs.audio.currentTime = this.currentSong.duration * percent
+        if (!this.playing) {
+          this.togglePlay()
+        }
+      },
       _getPosAndScale() {
         const miniWidth = 40
         const paddingLeft = 20
@@ -221,6 +250,9 @@
           newPlaying ? audio.play() : audio.pause()
         })
       }
+    },
+    components: {
+      ProgressBar
     }
   }
 
