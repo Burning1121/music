@@ -90,6 +90,9 @@
       scroll(pos) {
         this.scrollY = pos.y
       },
+      refresh() {
+        this.$refs.listview.refresh()
+      },
       _scrollTo(index) {
         if (!index && index !== 0) {
           return
@@ -158,7 +161,7 @@
   }
 </script>
 
-<style scoped lang="stylus" rel="stylesheet/stylus">
+<style scoped lang="stylus" type="text/stylus" rel="stylesheet/stylus">
   @import "~common/stylus/variable"
 
   .listview

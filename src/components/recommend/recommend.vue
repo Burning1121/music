@@ -1,5 +1,5 @@
 <template>
-  <div class="recommend">
+  <div class="recommend" ref="recommend">
     <scroll ref="scroll" class="recommend-content" :data="descList">
       <div>
         <div v-if="recommends.length>0" class="slider-wrapper">
@@ -39,8 +39,10 @@
   import Loading from 'src/base/loading/loading'
   import {getRecommend, getDescList} from 'api/recommend'
   import {ERR_OK} from 'api/config'
+  import {playListMixin} from 'src/common/js/mixin'
 
   export default {
+    mixins: [playListMixin],
     data() {
       return {
         recommends: [],
@@ -52,6 +54,11 @@
       this._getDescList()
     },
     methods: {
+      handleplayList(playList) {
+        let bottom = playList.length > 0 ? '60px' : ''
+        this.$refs.recommend.style.bottom = bottom
+        this.$refs.scroll.refresh()
+      },
       _getRecommend() {
         getRecommend().then((res) => {
           if (res.code === ERR_OK) {
@@ -81,7 +88,7 @@
   }
 </script>
 
-<style scoped lang="stylus" rel="stylesheet/stylus">
+<style scoped lang="stylus" type="text/stylus" rel="stylesheet/stylus">
   @import "~common/stylus/variable"
 
   .recommend
