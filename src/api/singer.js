@@ -31,7 +31,6 @@ export function getSingerDetail(singerId) {
     begin: 0,
     num: 100,
     songstatus: 1,
-    g_tk: 712401650,
     singermid: singerId
   })
 
