@@ -1,9 +1,9 @@
 <template>
   <div class="search">
     <div class="search-box-wrapper">
-      <search-box ref="searchBox"></search-box>
+      <search-box @query="onQueryChange" ref="searchBox"></search-box>
     </div>
-    <div class="shortcut-wrapper">
+    <div class="shortcut-wrapper" v-show="!query">
       <div class="shortcut">
         <div class="hot-key">
           <h1 class="title">热门搜索</h1>
@@ -13,8 +13,21 @@
             </li>
           </ul>
         </div>
+        <div class="search-history" v-show="searchHistory.length">
+          <h1 class="title">
+            <span class="text">搜索历史</span>
+            <span class="clear">
+            <i class="icon-clear"></i>
+          </span>
+          </h1>
+          <search-list :searches="searchHistory"></search-list>
+        </div>
       </div>
     </div>
+    <div class="search-result" v-show="query">
+      <suggest @select="saveSearch" @listScroll="blurIpt" :query="query"></suggest>
+    </div>
+    <router-view></router-view>
   </div>
 </template>
 
@@ -22,12 +35,21 @@
   import SearchBox from 'src/base/search-box/search-box'
   import { getHotKey } from 'src/api/search'
   import { ERR_OK } from 'src/api/config'
+  import Suggest from 'components/suggest/suggest'
+  import { mapActions, mapGetters } from 'vuex'
+  import SearchList from 'src/base/search-list/search-list'
 
   export default {
     data() {
       return {
-        hotKey: []
+        hotKey: [],
+        query: ''
       }
+    },
+    computed: {
+      ...mapGetters([
+        'searchHistory'
+      ])
     },
     created() {
       this._getHotKey()
@@ -36,16 +58,30 @@
       addQuery(query) {
         this.$refs.searchBox.setQuery(query)
       },
+      onQueryChange(query) {
+        this.query = query
+      },
+      blurIpt() {
+        this.$refs.searchBox.blur()
+      },
+      saveSearch() {
+        this.saveSearchHistory(this.query)
+      },
       _getHotKey() {
         getHotKey().then((res) => {
           if (res.code === ERR_OK) {
             this.hotKey = res.data.hotkey.slice(0, 10)
           }
         })
-      }
+      },
+      ...mapActions([
+        'saveSearchHistory'
+      ])
     },
     components: {
-      SearchBox
+      SearchBox,
+      Suggest,
+      SearchList
     }
   }
 </script>
