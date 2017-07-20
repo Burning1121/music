@@ -69,11 +69,12 @@
                @click.stop="togglePlay"></i>
           </progress-circle>
         </div>
-        <div class="control">
+        <div class="control" @click.stop="showPlaylist">
           <i class="icon-playlist"></i>
         </div>
       </div>
     </transition>
+    <playlist ref="playlist"></playlist>
     <audio ref="audio" :src="currentSong.url"
            @timeupdate="updateTime"
            @canplay="ready"
@@ -89,9 +90,11 @@
   import ProgressBar from 'src/base/progress-bar/progress-bar'
   import ProgressCircle from 'src/base/progress-Circle/progress-Circle'
   import { playMode } from 'src/common/js/config'
-  import { shuffle } from 'src/common/js/util'
+  import Playlist from 'components/playlist/playlist'
+  import { playerMixin } from 'src/common/js/mixin'
 
   export default {
+    mixins: [playerMixin],
     data() {
       return {
         songReady: false,
@@ -103,17 +106,10 @@
       percent() {
         return this.currentTime / this.currentSong.duration
       },
-      iconMode() {
-        return this.mode === playMode.sequence ? 'icon-sequence' : this.mode === playMode.loop ? 'icon-loop' : 'icon-random'
-      },
       ...mapGetters([
-        'playList',
         'fullScreen',
-        'currentSong',
         'playing',
-        'currentIndex',
-        'mode',
-        'sequenceList'
+        'currentIndex'
       ])
     },
     methods: {
@@ -247,6 +243,9 @@
           this.togglePlay()
         }
       },
+      showPlaylist() {
+        this.$refs.playlist.show()
+      },
       _getPosAndScale() {
         const miniWidth = 40
         const paddingLeft = 20
@@ -259,34 +258,16 @@
 
         return {x, y, scale}
       },
-      changeMode() {
-        const mode = (this.mode + 1) % 3
-        this.setPlayMode(mode)
-        let list = []
-        if (mode === playMode.random) {
-          list = shuffle(this.sequenceList)
-        } else {
-          list = this.sequenceList
-        }
-        this._saveCurrentIndex(list)
-        this.setPlayList(list)
-      },
-      _saveCurrentIndex(list) {
-        let index = list.findIndex((item) => {
-          return item.id === this.currentSong.id
-        })
-        this.setCurrentIndex(index)
-      },
       ...mapMutations({
         setFullScreen: 'SET_FULL_SCREEN',
-        setPlayingState: 'SET_PLAYING_STATE',
-        setCurrentIndex: 'SET_CURRENT_INDEX',
-        setPlayMode: 'SET_PLAY_MODE',
-        setPlayList: 'SET_PLAYLIST'
+        setPlayingState: 'SET_PLAYING_STATE'
       })
     },
     watch: {
       currentSong(newSong, oldSong) {
+        if (!newSong.id) {
+          return
+        }
         if (newSong.id === oldSong.id) {
           return
         }
@@ -303,7 +284,8 @@
     },
     components: {
       ProgressBar,
-      ProgressCircle
+      ProgressCircle,
+      Playlist
     }
   }
 
